@@ -10,7 +10,6 @@ const { connect } = require('./database')
 const { start } = require('./cache')
 const repo = require('./repo')
 const redisHelper = require('./redisHelper')
-const { createChannel, Publisher } = require('./rabbitMQ')
 const models = require('./models')
 const lang = require('./lang')
 const EventEmitter = require('events').EventEmitter
@@ -30,14 +29,6 @@ mediator.once('di.ready', async (container) => {
   console.log('connected firebase ', config.firebaseConfig)
   container.registerValue('firebaseAdmin', firebaseAdmin)
   // for RabbitMQ
-  const channel = await createChannel(config.rabbitConfig)
-  const publisher = new Publisher(channel, config.workerConfig.exchange)
-
-  const channelMail = await createChannel(config.rabbitConfig)
-  const publisherMail = new Publisher(channelMail, config.workerConfig.exchange)
-
-  container.registerValue('publisher', publisher)
-  container.registerValue('publisherMail', publisherMail)
 
   mediator.once('db.ready', db => {
     console.log('db.ready, starting connect cache ', config.redisConfig)

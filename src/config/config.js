@@ -1,4 +1,4 @@
-const DEFAULT_GOOGLE_APPLICATION_CREDENTIALS = require.resolve('./cho-nong-san-59a6d-firebase-adminsdk-h14u9-cb5ef62d3a.json')
+const DEFAULT_GOOGLE_APPLICATION_CREDENTIALS = require.resolve('./test-1a4cc-firebase-adminsdk-zwpu2-9f7d13e585.json')
 const serverSettings = {
   port: process.env.PORT || 8003,
   basePath: process.env.BASE_PATH || '',
@@ -12,8 +12,8 @@ const redisConfig = {
   clusterName: process.env.REDIS_CLUSTER_NAME || '',
   clusterPassword: process.env.REDIS_CLUSTER_PASSWORD || 'QDCJM446bJ4K',
   db: process.env.REDIS_DB || 5,
-  port: process.env.REDIS_PORT || 16380, // Redis port
-  host: process.env.REDIS_HOST || '10.0.9.27', // Redis host
+  port: process.env.REDIS_PORT || 6379, // Redis port
+  host: process.env.REDIS_HOST || '127.0.0.1', // Redis host
   expire: +process.env.EXPIRE_CACHE_SECOND || 1,
   expireSearch: process.env.EXPIRE_SEARCH || 24 * 7 * 60 * 60
 }
@@ -52,25 +52,15 @@ const firebaseConfig = {
 }
 
 const dbSettings = {
-  db: process.env.DB || 'chonongsan-user',
-  user: process.env.DB_USER || 'chonongsan',
-  pass: process.env.DB_PASS || 'f217s18AhSd',
+  db: process.env.DB || 'sc-user',
+  user: process.env.DB_USER || '',
+  pass: process.env.DB_PASS || '',
   repl: process.env.DB_REPLS || '',
   servers: (process.env.DB_SERVERS) ? process.env.DB_SERVERS.split(',') : [
-    '10.0.9.27:7999'
+    'localhost:27017'
   ]
 }
-const rabbitConfig = {
-  host: process.env.RABBIT_HOST || '10.0.9.27',
-  port: process.env.RABBIT_PORT || 15669,
-  user: process.env.RABBIT_USER || 'thanglongtcd',
-  pass: process.env.RABBIT_PASS || 'fdjfj123asd11'
-}
-const workerConfig = {
-  queueName: process.env.QUEUE_NAME || 'erp:user',
-  exchange: process.env.EXCHANGE || 'erp',
-  queueMail: process.env.QUEUE_MAIL || 'erp:mail'
-}
+
 const serverHelper = function () {
   const jwt = require('jsonwebtoken')
   const crypto = require('crypto')
@@ -204,7 +194,5 @@ module.exports = {
   historyType,
   redisConfig,
   userConfig,
-  userType,
-  workerConfig,
-  rabbitConfig
+  userType
 }

@@ -5,7 +5,6 @@ module.exports = container => {
   const i18n = container.resolve('i18n')
   const { schemaValidator } = container.resolve('models')
   const { httpCode, serverHelper, loginType, workerConfig } = container.resolve('config')
-  const publisherMail = container.resolve('publisherMail')
   const loginOrRegister = async (req, res) => {
     try {
       const { error, value } = schemaValidator(req.body, 'Login')
