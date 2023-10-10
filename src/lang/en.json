@@ -1,0 +1,9 @@
+{
+  "require_login": "Please login to continue.",
+  "logout": "Your account has been logout.",
+  "content_not_found": "The content doesn't exist.",
+  "user_blocked": "Your account has been blocked. Please contact to Customer care.",
+  "re_login": "Please re login.",
+  "session_not_found": "Session not found",
+  "kick": "You have been kicked"
+}

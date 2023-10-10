@@ -1,0 +1,135 @@
+image: docker:latest
+
+stages:
+  - build
+  - release
+  - review
+  - production
+
+variables:
+  CI_REGISTRY_IMAGE: $CI_REGISTRY/$CI_PROJECT_NAMESPACE/$CI_PROJECT_NAME
+
+before_script:
+  - echo "$CI_REGISTRY_PASSWORD" | docker login -u $CI_REGISTRY_USERNAME --password-stdin $CI_REGISTRY
+
+build:
+  image: docker
+  stage: build
+  tags:
+    - ci
+  script:
+    - docker build -t $CI_REGISTRY_IMAGE:$CI_COMMIT_REF_SLUG .
+    - docker push $CI_REGISTRY_IMAGE:$CI_COMMIT_REF_SLUG
+  except:
+    - tags
+
+release-image:
+  stage: release
+  tags:
+    - ci
+  except:
+    - master
+  script:
+    - docker pull $CI_REGISTRY_IMAGE:$CI_COMMIT_REF_SLUG
+    - docker tag $CI_REGISTRY_IMAGE:$CI_COMMIT_REF_SLUG $CI_REGISTRY_IMAGE:latest
+    - docker push $CI_REGISTRY_IMAGE:latest
+
+.mycloud: &mycloud
+  - kubectl version
+  - cd k8s/
+  - sed -i "s/__CI_BUILD_REF_SLUG__/${CI_COMMIT_REF_SLUG}/" deployment.yaml ingress.yaml service.yaml
+  - sed -i "s/__PROJECT_NAME__/${CI_PROJECT_NAME}/" deployment.yaml ingress.yaml service.yaml
+  - sed -i "s/__PROJECT_NAMESPACE__/${CI_PROJECT_NAMESPACE}/" deployment.yaml ingress.yaml service.yaml
+  - sed -i "s/__DOCKER_IMAGE__/$CI_REGISTRY\/$CI_PROJECT_NAMESPACE\/$CI_PROJECT_NAME:$CI_COMMIT_REF_SLUG/" deployment.yaml
+  - |
+    if kubectl get secrets -n $CI_PROJECT_NAMESPACE | grep myregistry; then
+      echo 'myregistry created'
+    else
+      kubectl create secret docker-registry myregistry --docker-server=$CI_REGISTRY --docker-username=$CI_REGISTRY_USERNAME --docker-password=$CI_REGISTRY_PASSWORD --docker-email=$CI_REGISTRY_EMAIL --namespace=$CI_PROJECT_NAMESPACE
+      echo "docker registry created"
+    fi
+
+.prod_deploy: &prod_deploy
+  image: lachlanevenson/k8s-kubectl:latest
+  stage: production
+  tags:
+    - ci
+  environment:
+    name: production
+    url: https://api.jungotv.gviet.vn
+  before_script: *mycloud
+  script:
+    - sed -i "s/__K8S_HOST__/${K8S_HOST}/" ingress.yaml
+    - kubectl apply -f deployment.yaml
+    - kubectl apply -f service.yaml
+    - kubectl apply -f ingress.yaml
+    - kubectl rollout status -f deployment.yaml
+    - kubectl get all,ing -n $CI_PROJECT_NAMESPACE -l app=${CI_PROJECT_NAME}-${CI_COMMIT_REF_SLUG}
+
+.staging_deploy: &staging_deploy
+  image: lachlanevenson/k8s-kubectl:latest
+  stage: review
+  tags:
+    - staging
+  environment:
+    name: review/$CI_COMMIT_REF_SLUG_NAME
+    url: https://api.jungotv.staging.gviet.vn
+    on_stop: stop_review
+  before_script: *mycloud
+  script:
+    - sed -i "s/__K8S_HOST__/${K8S_HOST}/" ingress.yaml
+    - |
+      if kubectl apply -f deployment.yaml | grep -q unchanged; then
+          echo "=> Patching deployment to force image update."
+          kubectl patch -f deployment.yaml -p "{\"spec\":{\"template\":{\"metadata\":{\"annotations\":{\"ci-last-updated\":\"$(date +'%s')\"}}}}}"
+      else
+          echo "=> Deployment apply has changed the object, no need to force image update."
+      fi
+    - kubectl apply -f service.yaml || true
+    - kubectl apply -f ingress.yaml
+    - kubectl rollout status -f deployment.yaml
+    - kubectl get all,ing -n $CI_PROJECT_NAMESPACE -l app=${CI_PROJECT_NAME}-${CI_COMMIT_REF_SLUG}
+
+stop_review:
+  image: lachlanevenson/k8s-kubectl:latest
+  stage: review
+  before_script: []
+  tags:
+    - staging
+  variables:
+    GIT_STRATEGY: none
+  when: manual
+  only:
+    - branches
+  except:
+    - master
+    - tags
+  environment:
+    name: review/$CI_COMMIT_REF_SLUG_NAME
+    action: stop
+  script:
+    - kubectl version
+    - kubectl delete ing -n $CI_PROJECT_NAMESPACE -l app=${CI_PROJECT_NAME}-${CI_COMMIT_REF_SLUG}
+    - kubectl delete all -n $CI_PROJECT_NAMESPACE -l app=${CI_PROJECT_NAME}-${CI_COMMIT_REF_SLUG}
+
+auto-deploy-master:
+  <<: *staging_deploy
+  only:
+    - master
+
+auto-deploy-tags:
+  <<: *prod_deploy
+  only:
+    - tags
+
+deploy to staging:
+  <<: *staging_deploy
+  except:
+    - master
+    - tags
+
+deploy to production:
+  <<: *prod_deploy
+  when: manual
+  only:
+    - master
