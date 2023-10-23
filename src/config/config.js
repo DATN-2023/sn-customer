@@ -1,6 +1,6 @@
 const DEFAULT_GOOGLE_APPLICATION_CREDENTIALS = require.resolve('./test-1a4cc-firebase-adminsdk-zwpu2-9f7d13e585.json')
 const serverSettings = {
-  port: process.env.PORT || 8003,
+  port: process.env.PORT || 8005,
   basePath: process.env.BASE_PATH || '',
   signature: process.env.SECRET_SIGNATURE || '#123Ag'
 }
