@@ -267,8 +267,8 @@ module.exports = container => {
   const getCount = (pipe) => {
     return User.countDocuments(pipe)
   }
-  const getUserById = (uid, ...args) => {
-    return User.findOne({ uid }, ...args)
+  const getUserById = (id, ...args) => {
+    return User.findById(id, args)
   }
   const getListFriendByPhoneNum = async (phones) => {
     return User.find({ phone: { $in: phones } }, { name: 1, avatar: 1, _id: 1, phone: 1 })

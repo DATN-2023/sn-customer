@@ -1,6 +1,8 @@
 const joi = require('@hapi/joi')
 const mongoose = require('mongoose')
 module.exports = container => {
+  const { ObjectId } = mongoose.Types
+  container.registerValue('ObjectId', ObjectId)
   const deviceTypes = {
     ANDROID: 1,
     IOS: 2,
