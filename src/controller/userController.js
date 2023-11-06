@@ -151,15 +151,11 @@ module.exports = container => {
       if (error) {
         return res.status(httpCode.BAD_REQUEST).json({ ok: false, msg: error.toString() })
       }
-      if (serverHelper.isTrustSignature(value)) {
-        const { deviceType, deviceId, versionCode } = value
-        const token = serverHelper.genToken({
-          deviceType, versionCode, deviceId, loginType: loginType.GUEST
-        })
-        res.status(httpCode.SUCCESS).json({ token })
-      } else {
-        res.status(httpCode.SIGNATURE_ERROR).json({ ok: false })
-      }
+      const { deviceType, deviceId, versionCode } = value
+      const token = serverHelper.genToken({
+        deviceType, versionCode, deviceId, loginType: loginType.GUEST
+      })
+      res.status(httpCode.SUCCESS).json({ token })
     } catch (e) {
       logger.e(e)
       res.status(httpCode.UNKNOWN_ERROR).json({ ok: false })
@@ -469,7 +465,10 @@ module.exports = container => {
         const userExist = await userRepo.checkExist({ email: value.email })
         if (userExist) {
           if (require('bcryptjs').compareSync(value.password, userExist.password)) {
-            const user = await userRepo.loginUser({ ...value, ...userExist.toObject(), auth_time: Math.floor(Date.now() / 1000) })
+            const user = await userRepo.loginUser({
+              ...value, ...userExist.toObject(),
+              auth_time: Math.floor(Date.now() / 1000)
+            })
             if (user.isLocked) {
               return res.status(httpCode.USER_BLOCK).json({ msg: i18n.user_blocked })
             }
