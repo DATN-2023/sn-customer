@@ -9,6 +9,7 @@ const controller = require('./controller')
 const { connect } = require('./database')
 const { start } = require('./cache')
 const repo = require('./repo')
+const { createChannel, Publisher } = require('./queue')
 const redisHelper = require('./redisHelper')
 const models = require('./models')
 const lang = require('./lang')
@@ -24,12 +25,12 @@ mediator.once('di.ready', async (container) => {
   container.registerValue('mediator', mediator)
   firebaseAdmin.initializeApp({
     credential: firebaseAdmin.credential.cert(config.firebaseConfig.serviceAccountPath),
-    // databaseURL: config.firebaseConfig.databaseURL
   })
   console.log('connected firebase ', config.firebaseConfig)
   container.registerValue('firebaseAdmin', firebaseAdmin)
-  // for RabbitMQ
-
+  const channel = await createChannel(config.rabbitConfig)
+  const publisher = new Publisher(channel, config.workerConfig.exchange, config.workerConfig.exchangeType)
+  container.registerValue('publisher', publisher)
   mediator.once('db.ready', db => {
     console.log('db.ready, starting connect cache ', config.redisConfig)
     start(container).then(redis => {

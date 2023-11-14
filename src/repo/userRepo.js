@@ -1,8 +1,9 @@
 module.exports = container => {
   const { schemas } = container.resolve('models')
   const logger = container.resolve('logger')
+  const publisher = container.resolve('publisher')
   const i18n = container.resolve('i18n')
-  const { serverHelper, loginType, ObjectId, historyType } = container.resolve('config')
+  const { serverHelper, loginType, ObjectId, historyType, workerConfig } = container.resolve('config')
   const { User, Session, History } = schemas.mongoose
   const MAX_DEVICE = +process.env.MAX_DEVICE || 2
   const addUser = async (userObj) => {
@@ -69,7 +70,18 @@ module.exports = container => {
           phone,
           ...update
         })
+        // publisher.sendToQueue(userResponse, workerConfig.queueName)
       }
+      await publisher.sendToQueue({
+        customerId: userResponse._id.toString(),
+        avatar,
+        name,
+        email,
+        provider: firebase.sign_in_provider,
+        uid,
+        fcmToken,
+        phone
+      }, workerConfig.queueName)
       token = serverHelper.genToken({
         _id: String(userResponse._id),
         uid,
