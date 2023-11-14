@@ -70,18 +70,17 @@ module.exports = container => {
           phone,
           ...update
         })
-        // publisher.sendToQueue(userResponse, workerConfig.queueName)
+        await publisher.sendToQueue({
+          customerId: userResponse._id.toString(),
+          avatar,
+          name,
+          email,
+          provider: firebase.sign_in_provider,
+          uid,
+          fcmToken,
+          phone
+        }, workerConfig.queueName)
       }
-      await publisher.sendToQueue({
-        customerId: userResponse._id.toString(),
-        avatar,
-        name,
-        email,
-        provider: firebase.sign_in_provider,
-        uid,
-        fcmToken,
-        phone
-      }, workerConfig.queueName)
       token = serverHelper.genToken({
         _id: String(userResponse._id),
         uid,
