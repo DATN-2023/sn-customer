@@ -23,7 +23,7 @@ module.exports = (container) => {
         const users = await userRepo.getUserNoPaging({ _id: { $in: ids } }, { name: 1, fcmToken: 1, email: 1, avatar: 1, uid: 1, dob: 1 })
         return res.status(httpCode.SUCCESS).json(users)
       }
-      return res.status(httpCode.BAD_REQUEST).json({ msg: 'BAD REQUEST' })
+      return res.status(httpCode.SUCCESS).send([])
     } catch (e) {
       logger.e(e)
       res.status(httpCode.UNKNOWN_ERROR).json({})
