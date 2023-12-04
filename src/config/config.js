@@ -83,7 +83,7 @@ const serverHelper = function () {
   }
 
   function genToken (obj) {
-    return jwt.sign(obj, secretKey, { expiresIn: process.env.EXPIRE_TOKEN || '100y' })
+    return jwt.sign(obj, secretKey, { expiresIn: process.env.EXPIRE_TOKEN || '1d' })
   }
 
   function verifyToken (token) {
