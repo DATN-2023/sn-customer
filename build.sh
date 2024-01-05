@@ -1,1 +1,1 @@
-git pull&&docker build . -t chonongsan-user
+git pull&&docker build . -t sn-customer
